@@ -1,0 +1,56 @@
+﻿<Page x:Class="WebtronicsTestWork.Pages.FileInfoPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:WebtronicsTestWork.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" 
+      d:DesignWidth="200"
+      Title="Информация о файле">
+
+    <Page.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="WrapWithOverflow"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="2"/>
+        </Style>
+    </Page.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="70"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="19"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+
+        <Button x:Name="ClosePanelButton" 
+                Grid.Column="1"
+                Width="20"
+                Content="X" 
+                HorizontalAlignment="Right"
+                Click="ClosePanelButtonOnClick"/>
+
+        <TextBlock Grid.Row="1" 
+                   Text="Название:"/>
+        <TextBlock Grid.Row="2" 
+                   Text="Размер:"/>
+        <TextBlock Grid.Row="3" 
+                   Text="Созднан:"/>
+
+        <TextBlock Grid.Row="1"
+                   Grid.Column="1"
+                   Text="{Binding Name}"/>
+        <TextBlock Grid.Row="2" 
+                   Grid.Column="1"
+                   Text="{Binding Size, StringFormat={}{0} байт}"/>
+        <TextBlock Grid.Row="3" 
+                   Grid.Column="1"
+                   Text="{Binding CreationTime}"/>
+    </Grid>
+</Page>
