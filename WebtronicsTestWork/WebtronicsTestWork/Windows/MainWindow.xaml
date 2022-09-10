@@ -65,8 +65,8 @@
                             <Image Source="{Binding Source}"
                                    Height="80"/>
                             <TextBlock Text="{Binding Name}"
-                                       HorizontalAlignment="Center"
-                                       TextWrapping="WrapWithOverflow"/>
+                                       Width="100"
+                                       TextAlignment="Center"/>
                         </StackPanel>
                     </DataTemplate>
                 </ListView.ItemTemplate>

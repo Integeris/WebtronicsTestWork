@@ -50,42 +50,59 @@ namespace WebtronicsTestWork.Windows
         {
             try
             {
+                pathManager.StopSearch();
                 pathManager.GoBack();
-                UpdateDirectory();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-               LoadDrives();
+                InfoViewer.ShowError(ex.Message);
             }
+
+            UpdateDirectory();
         }
 
         private void SearchTextBoxOnKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
+                pathManager.StopSearch();
+
                 if (String.IsNullOrWhiteSpace(SearchTextBox.Text))
                 {
-                    InfoViewer.ShowError("Введите шаблон для поиска.");
+                    PathTextBox.Text = pathManager.Path;
+                    UpdateDirectory();
                 }
                 else
                 {
-                    PathTextBox.Text = String.Empty;
-                    MainListView.ItemsSource = pathManager.SearchObjects(SearchTextBox.Text);
+                    try
+                    {
+                        MainListView.ItemsSource = pathManager.SearchObjects(SearchTextBox.Text);
+                        PathTextBox.Text = String.Empty;
+                    }
+                    catch (Exception ex)
+                    {
+                        InfoViewer.ShowError(ex.Message);
+                    }
                 }
             }
         }
 
         private void PathTextBoxOnKeyDown(object sender, KeyEventArgs e)
         {
-            try
+            if (e.Key == Key.Enter)
             {
-                pathManager.OpenFolder(PathTextBox.Text);
-                UpdateDirectory();
-            }
-            catch (Exception)
-            {
-                InfoViewer.ShowError("Папка не найдена.");
-                UpdateDirectory();
+                pathManager.StopSearch();
+
+                try
+                {
+                    pathManager.OpenFolder(PathTextBox.Text);
+                    UpdateDirectory();
+                }
+                catch (Exception ex)
+                {
+                    InfoViewer.ShowError(ex.Message);
+                    PathTextBox.Text = pathManager.Path;
+                }
             }
         }
 
@@ -138,6 +155,7 @@ namespace WebtronicsTestWork.Windows
                 {
                     if (item.ObjectType == Enums.ObjectType.Folder)
                     {
+                        pathManager.StopSearch();
                         pathManager.OpenFolder(item.FullName);
                         UpdateDirectory();
                     }
@@ -161,16 +179,6 @@ namespace WebtronicsTestWork.Windows
             timer.Start();
 
             clickEventArgs = e;
-        }
-        
-        /// <summary>
-        /// Загрузка дисков.
-        /// </summary>
-        private void LoadDrives()
-        {
-            PathTextBox.Text = String.Empty;
-            MainListView.ItemsSource = pathManager.GetDrives();
-            InfoFrame.Visibility = Visibility.Collapsed;
         }
 
         /// <summary>
@@ -205,9 +213,17 @@ namespace WebtronicsTestWork.Windows
                 MainListView.ItemsSource = pathManager.GetObjects();
                 InfoFrame.Visibility = Visibility.Collapsed;
             }
-            catch (Exception)
+            catch (UnauthorizedAccessException ex)
             {
-                LoadDrives();
+                InfoViewer.ShowError(ex.Message);
+                pathManager.GoBack();
+                UpdateDirectory();
+            }
+            catch (Exception ex)
+            {
+                InfoViewer.ShowError(ex.Message);
+                pathManager.OpenFolder(String.Empty);
+                UpdateDirectory();
             }
         }
 
@@ -218,6 +234,7 @@ namespace WebtronicsTestWork.Windows
         private void ClosePanel(object sender)
         {
             InfoFrame.Visibility = Visibility.Collapsed;
+            
         }
     }
 }

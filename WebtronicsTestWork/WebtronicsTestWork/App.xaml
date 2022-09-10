@@ -8,6 +8,9 @@
             <Style TargetType="TextBox">
                 <Setter Property="Height" Value="20"/>
             </Style>
+            <Style TargetType="TextBlock">
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

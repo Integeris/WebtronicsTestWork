@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace WebtronicsTestWork.Classes
 {
     /// <summary>
     /// Представление папки.
     /// </summary>
-    public class FolderView
+    public class FolderView : INotifyPropertyChanged
     {
         /// <summary>
         /// Размер.
@@ -17,6 +20,13 @@ namespace WebtronicsTestWork.Classes
         /// Количество файлов.
         /// </summary>
         private int count;
+
+        private bool killLoadTask = false;
+
+        /// <summary>
+        /// Реализация события обновления при изменении.
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
         /// Названте.
@@ -29,7 +39,11 @@ namespace WebtronicsTestWork.Classes
         public long Size
         {
             get => size;
-            set => size = value;
+            set
+            {
+                size = value;
+                InvokeNotify(nameof(Size));
+            }
         }
 
         /// <summary>
@@ -38,7 +52,11 @@ namespace WebtronicsTestWork.Classes
         public int Count
         {
             get => count;
-            set => count = value;
+            set
+            {
+                count = value;
+                InvokeNotify(nameof(Count));
+            }
         }
 
         /// <summary>
@@ -48,7 +66,15 @@ namespace WebtronicsTestWork.Classes
         public FolderView(DirectoryInfo directoryInfo)
         {
             Name = directoryInfo.Name;
-            GetInfo(directoryInfo, ref count, ref size);
+            Task.Run(() => GetInfo(directoryInfo));
+        }
+
+        /// <summary>
+        /// Завершает процесс загрузки данных о папке.
+        /// </summary>
+        public void KillLoadTask()
+        {
+            killLoadTask = true;
         }
 
         /// <summary>
@@ -57,24 +83,38 @@ namespace WebtronicsTestWork.Classes
         /// <param name="directoryInfo">Папка, о которой следует получить информацию.</param>
         /// <param name="count">Количество фалов.</param>
         /// <param name="size">Размер папки.</param>
-        private static void GetInfo(in DirectoryInfo directoryInfo, ref int count, ref long size)
+        private void GetInfo(in DirectoryInfo directoryInfo)
         {
+            if (killLoadTask)
+            {
+                return;
+            }
+
             try
             {
                 FileInfo[] files = directoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly);
-                count += files.Length;
+                Count += files.Length;
 
                 foreach (FileInfo filePath in files)
                 {
-                    size += filePath.Length;
+                    Size += filePath.Length;
                 }
 
                 foreach (DirectoryInfo directory in directoryInfo.GetDirectories())
                 {
-                    GetInfo(directory, ref count, ref size);
+                    GetInfo(directory);
                 }
             }
             catch (Exception) { }
+        }
+
+        /// <summary>
+        /// Вызов уведомления обновления.
+        /// </summary>
+        /// <param name="parametrName">Название параметра.</param>
+        private void InvokeNotify(string parametrName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(parametrName));
         }
     }
 }

@@ -10,6 +10,11 @@ namespace WebtronicsTestWork.Pages
     public partial class FolderInfoPage : Page
     {
         /// <summary>
+        /// Информация о папке.
+        /// </summary>
+        private readonly FolderView folderView;
+
+        /// <summary>
         /// Сигнатура методов обработки закрытия панели.
         /// </summary>
         /// <param name="sender">Объект, вызвавший событие.</param>
@@ -29,10 +34,20 @@ namespace WebtronicsTestWork.Pages
             InitializeComponent();
 
             this.DataContext = folderView;
+            this.folderView = folderView;
+        }
+
+        /// <summary>
+        /// Уничтожение страницы.
+        /// </summary>
+        ~FolderInfoPage()
+        {
+            folderView.KillLoadTask();
         }
 
         private void ClosePanelButtonOnClick(object sender, RoutedEventArgs e)
         {
+            folderView.KillLoadTask();
             ClosePanel?.Invoke(this);
         }
     }

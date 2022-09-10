@@ -10,9 +10,8 @@
       Title="Информация о папке">
 
     <Page.Resources>
-        <Style TargetType="TextBlock">
-            <Setter Property="TextWrapping" Value="WrapWithOverflow"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="MaxWidth" Value="130"/>
             <Setter Property="Margin" Value="2"/>
         </Style>
     </Page.Resources>

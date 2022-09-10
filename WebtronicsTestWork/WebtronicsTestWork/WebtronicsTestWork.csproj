@@ -65,6 +65,7 @@
     </Compile>
     <Compile Include="Classes\FileView.cs" />
     <Compile Include="Classes\FolderView.cs" />
+    <Compile Include="Classes\ImagesCollection.cs" />
     <Compile Include="Classes\InfoViewer.cs" />
     <Compile Include="Classes\ObjectView.cs" />
     <Compile Include="Classes\PathManager.cs" />

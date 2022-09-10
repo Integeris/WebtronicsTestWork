@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
+﻿using System.IO;
 using System.Windows.Media.Imaging;
 using WebtronicsTestWork.Enums;
 
@@ -33,27 +31,16 @@ namespace WebtronicsTestWork.Classes
         {
             get
             {
-                Bitmap image;
-                BitmapImage bitmapImage = new BitmapImage();
+                BitmapImage bitmapImage;
 
                 switch (ObjectType)
                 {
                     case ObjectType.File:
-                        image = Properties.Resources.document;
+                        bitmapImage = ImagesCollection.FileSource;
                         break;
                     default:
-                        image = Properties.Resources.folder;
+                        bitmapImage = ImagesCollection.FolderSource;
                         break;
-                }
-
-                using (MemoryStream stream = new MemoryStream())
-                {
-                    image.Save(stream, ImageFormat.Png);
-                    stream.Position = 0;
-                    bitmapImage.BeginInit();
-                    bitmapImage.StreamSource = stream;
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.EndInit();
                 }
 
                 return bitmapImage;

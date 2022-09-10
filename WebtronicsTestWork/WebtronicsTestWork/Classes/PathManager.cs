@@ -1,7 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Documents;
 
 namespace WebtronicsTestWork.Classes
 {
@@ -10,6 +16,27 @@ namespace WebtronicsTestWork.Classes
     /// </summary>
     public class PathManager
     {
+        /// <summary>
+        /// Запрещённые символы для поиска.
+        /// </summary>
+        private static readonly string forbiddenSymbols = @"/\:«<>|\";
+
+        /// <summary>
+        /// Замена символов поиска windows на символы поиска Regex.
+        /// </summary>
+        private static readonly Dictionary<string, string> replaceDictionary = new Dictionary<string, string>()
+        {
+            { "\\", "\\\\" },
+            { ".", "\\." },
+            { "?", "." },
+            { "*", "\\w*" }
+        };
+
+        /// <summary>
+        /// Остановлен ли поиск.
+        /// </summary>
+        private bool searchIsStop;
+
         /// <summary>
         /// Открытый путь.
         /// </summary>
@@ -26,6 +53,11 @@ namespace WebtronicsTestWork.Classes
         /// <returns>Список папок.</returns>
         public List<ObjectView> GetFolders()
         {
+            if (String.IsNullOrWhiteSpace(Path))
+            {
+                return GetDrives();
+            }
+
             List<ObjectView> folders = new List<ObjectView>();
             DirectoryInfo directoryInfo = new DirectoryInfo(Path);
 
@@ -45,6 +77,12 @@ namespace WebtronicsTestWork.Classes
         public List<ObjectView> GetFiles()
         {
             List<ObjectView> files = new List<ObjectView>();
+
+            if (String.IsNullOrWhiteSpace(Path))
+            {
+                return files;
+            }
+
             DirectoryInfo directoryInfo = new DirectoryInfo(Path);
 
             foreach (FileInfo item in directoryInfo.GetFiles())
@@ -123,13 +161,33 @@ namespace WebtronicsTestWork.Classes
         /// <param name="fullName">Полное название папки.</param>
         public void OpenFolder(string fullName)
         {
+            fullName = fullName.Replace('/', '\\');
+
+            if (Regex.IsMatch(fullName, @"^\w{1}:$"))
+            {
+                fullName += "\\";
+            }
+            else if (Regex.IsMatch(fullName, @"^\w{1}:\\{2,}$"))
+            {
+                fullName = Regex.Replace(fullName, @"\\+$", "\\");
+            }
+            else if (!Regex.IsMatch(fullName, @"^\w{1}:\\$") && fullName.EndsWith("\\"))
+            {
+                fullName = Regex.Replace(fullName, @"\\+$", "");
+            }
+
             if (Directory.Exists(fullName))
             {
                 Path = fullName;
-                return;
             }
-
-            throw new Exception($"Открываемой папки({fullName}) не существует.");
+            else if (String.IsNullOrWhiteSpace(fullName))
+            {
+                Path = String.Empty;
+            }
+            else
+            {
+                throw new Exception($"Открываемой папки '{fullName}' не существует или том недоступен.");
+            }
         }
 
         /// <summary>
@@ -152,8 +210,15 @@ namespace WebtronicsTestWork.Classes
         /// </summary>
         public void GoBack()
         {
-            string newPath = System.IO.Path.GetDirectoryName(Path);
-            Path = newPath ?? throw new Exception("Невозможно перейти в каталог.");
+            try
+            {
+                string newPath = System.IO.Path.GetDirectoryName(Path);
+                Path = newPath ?? String.Empty;
+            }
+            catch (Exception)
+            {
+                Path = String.Empty;
+            }
         }
 
         /// <summary>
@@ -161,24 +226,96 @@ namespace WebtronicsTestWork.Classes
         /// </summary>
         /// <param name="template">Название объекта.</param>
         /// <returns>Список найденныйх объектов.</returns>
-        public List<ObjectView> SearchObjects(string template)
+        public ObservableCollection<ObjectView> SearchObjects(string template)
         {
-            List<ObjectView> objectViews = new List<ObjectView>();
-            DirectoryInfo directoryInfo = new DirectoryInfo(Path);
+            ObservableCollection<ObjectView> objectViews = new ObservableCollection<ObjectView>();
 
-            foreach (DirectoryInfo item in directoryInfo.GetDirectories(template, SearchOption.AllDirectories))
+            if (template.Any(chr => forbiddenSymbols.Contains(chr)))
             {
-                ObjectView folder = new ObjectView(item.FullName, Enums.ObjectType.Folder);
-                objectViews.Add(folder);
+                throw new Exception($"Шаблон не может содержать символы {forbiddenSymbols}");
             }
 
-            foreach (FileInfo item in directoryInfo.GetFiles(template, SearchOption.AllDirectories))
+            searchIsStop = false;
+            DirectoryInfo directoryInfo;
+            IProgress<ObjectView> progress = new Progress<ObjectView>((view) =>
             {
-                ObjectView file = new ObjectView(item.FullName, Enums.ObjectType.File);
-                objectViews.Add(file);
+                objectViews.Add(view);
+
+                if (objectViews.Count >= 1000)
+                {
+                    searchIsStop = true;
+                }
+            });
+
+            if (String.IsNullOrEmpty(Path))
+            {
+                foreach (ObjectView item in GetDrives())
+                {
+                    directoryInfo = new DirectoryInfo(item.FullName);
+                    Task.Run(() => GetSearchObjects(directoryInfo, progress, template));
+                }
+            }
+            else
+            {
+                directoryInfo = new DirectoryInfo(Path);
+                Task.Run(() => GetSearchObjects(directoryInfo, progress, template));
             }
 
             return objectViews;
+        }
+
+        /// <summary>
+        /// Остановка поиска.
+        /// </summary>
+        public void StopSearch()
+        {
+            searchIsStop = true;
+        }
+
+        /// <summary>
+        /// Асинхронный поиск папок и файлов.
+        /// </summary>
+        /// <param name="directory">Папка для поиска.</param>
+        /// <param name="progress">Поставщик обновлений списка.</param>
+        /// <param name="template">Шаблон поиска.</param>
+        /// <param name="regexPattern">Шаблон для поиска регулярными выражениями.</param>
+        private void GetSearchObjects(DirectoryInfo directory, IProgress<ObjectView> progress, string template, string regexPattern = null)
+        {
+            if (searchIsStop)
+            {
+                return;
+            }
+
+            if (regexPattern == null)
+            {
+                regexPattern = template;
+
+                foreach (var item in replaceDictionary)
+                {
+                    regexPattern = regexPattern.Replace(item.Key, item.Value);
+                }
+            }
+
+            try
+            {
+                foreach (DirectoryInfo directryInfo in directory.GetDirectories())
+                {
+                    if (Regex.IsMatch(directryInfo.Name, regexPattern, RegexOptions.IgnoreCase))
+                    {
+                        ObjectView folder = new ObjectView(directryInfo.FullName, Enums.ObjectType.Folder);
+                        progress.Report(folder);
+                    }
+
+                    GetSearchObjects(directryInfo, progress, template, regexPattern);
+                }
+
+                foreach (FileInfo item in directory.GetFiles(template))
+                {
+                    ObjectView file = new ObjectView(item.FullName, Enums.ObjectType.File);
+                    progress.Report(file);
+                }
+            }
+            catch (Exception) { }
         }
     }
 }
