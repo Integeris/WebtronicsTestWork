@@ -3,6 +3,8 @@ using System.IO;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using WebtronicsTestWork.Classes;
 using WebtronicsTestWork.Pages;
@@ -15,6 +17,16 @@ namespace WebtronicsTestWork.Windows
     public partial class MainWindow : Window
     {
         /// <summary>
+        /// Количество нажатий на иконку.
+        /// </summary>
+        private int clickCount;
+
+        /// <summary>
+        /// Происходит ли поиск.
+        /// </summary>
+        private bool isSearching = false;
+
+        /// <summary>
         /// Файловый менеджер.
         /// </summary>
         private readonly PathManager pathManager = new PathManager();
@@ -25,9 +37,9 @@ namespace WebtronicsTestWork.Windows
         private readonly Timer timer = new Timer(300);
 
         /// <summary>
-        /// Количество нажатий на иконку.
+        /// Нажатый элемент.
         /// </summary>
-        private int clickCount;
+        private ObjectView clickedItem;
 
         /// <summary>
         /// Данные о событии нажатия.
@@ -41,6 +53,7 @@ namespace WebtronicsTestWork.Windows
         {
             InitializeComponent();
 
+            pathManager.SearchComplite += PathManagerOnSearchComplite;
             timer.Elapsed += TimerOnElapsed;
             pathManager.OpenFolder("C:\\");
             UpdateDirectory();
@@ -48,14 +61,21 @@ namespace WebtronicsTestWork.Windows
 
         private void BackButtonOnClick(object sender, RoutedEventArgs e)
         {
-            try
+            if (!isSearching)
             {
-                pathManager.StopSearch();
-                pathManager.GoBack();
+                try
+                {
+                    pathManager.StopSearch();
+                    pathManager.GoBack();
+                }
+                catch (Exception ex)
+                {
+                    InfoViewer.ShowError(ex.Message);
+                }
             }
-            catch (Exception ex)
+            else
             {
-                InfoViewer.ShowError(ex.Message);
+                isSearching = false;
             }
 
             UpdateDirectory();
@@ -77,7 +97,8 @@ namespace WebtronicsTestWork.Windows
                     try
                     {
                         MainListView.ItemsSource = pathManager.SearchObjects(SearchTextBox.Text);
-                        PathTextBox.Text = String.Empty;
+                        isSearching = true;
+                        PathTextBox.Text = "Поиск...";
                     }
                     catch (Exception ex)
                     {
@@ -96,6 +117,7 @@ namespace WebtronicsTestWork.Windows
                 try
                 {
                     pathManager.OpenFolder(PathTextBox.Text);
+                    isSearching = false;
                     UpdateDirectory();
                 }
                 catch (Exception ex)
@@ -157,6 +179,7 @@ namespace WebtronicsTestWork.Windows
                     {
                         pathManager.StopSearch();
                         pathManager.OpenFolder(item.FullName);
+                        isSearching = false;
                         UpdateDirectory();
                     }
                     else
@@ -175,10 +198,22 @@ namespace WebtronicsTestWork.Windows
         private void ListViewItemOnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             timer.Stop();
-            clickCount++;
-            timer.Start();
 
-            clickEventArgs = e;
+            ObjectView item = (ObjectView)((FrameworkElement)e.OriginalSource).DataContext;
+
+            if (item != null)
+            {
+                if (item != clickedItem)
+                {
+                    clickCount = 0;
+                }
+
+                clickCount++;
+                clickEventArgs = e;
+                clickedItem = item;
+
+                timer.Start();
+            }
         }
 
         /// <summary>
@@ -235,6 +270,18 @@ namespace WebtronicsTestWork.Windows
         {
             InfoFrame.Visibility = Visibility.Collapsed;
             
+        }
+
+        /// <summary>
+        /// Обработка завершения поиска.
+        /// </summary>
+        /// <param name="searchIsStop">Остановлен ли поиск.</param>
+        private void PathManagerOnSearchComplite(bool searchIsStop)
+        {
+            if (!searchIsStop)
+            {
+                PathTextBox.Dispatcher.Invoke(() => PathTextBox.Text = "Поиск завершён.");
+            }
         }
     }
 }

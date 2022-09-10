@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
@@ -21,6 +20,9 @@ namespace WebtronicsTestWork.Classes
         /// </summary>
         private int count;
 
+        /// <summary>
+        /// Отмена процесса загрузки.
+        /// </summary>
         private bool killLoadTask = false;
 
         /// <summary>

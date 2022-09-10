@@ -1,15 +1,18 @@
 ﻿using MySqlConnector;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using WebtronicsTestWork.Model.Entities;
 
 namespace WebtronicsTestWork.Model.Classes
 {
+    /// <summary>
+    /// Менеджер подключения к базе данных.
+    /// </summary>
     public static class Core
     {
+        /// <summary>
+        /// Построитель строки подключения.
+        /// </summary>
         private static readonly MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder()
         {
             Server = Properties.Settings.Default.Server,
@@ -18,12 +21,20 @@ namespace WebtronicsTestWork.Model.Classes
             Password = Properties.Settings.Default.Password
         };
 
+        /// <summary>
+        /// Асинхронно занести информацию о открытом файле в базу данных.
+        /// </summary>
+        /// <param name="openedFile">Открытый файл.</param>
         public static void AddOpenedFileAsync(OpenedFile openedFile)
         {
             Task.Run(() => AddOpenedFile(openedFile));
         }
 
-        public static void AddOpenedFile(OpenedFile openedFile)
+        /// <summary>
+        /// Занести информацию о открытом файле в базу данных.
+        /// </summary>
+        /// <param name="openedFile">Открытый файл.</param>
+        private static void AddOpenedFile(OpenedFile openedFile)
         {
             MySqlConnection connection = new MySqlConnection()
             {

@@ -6,8 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Documents;
 using WebtronicsTestWork.Model.Classes;
 using WebtronicsTestWork.Model.Entities;
 
@@ -38,6 +36,17 @@ namespace WebtronicsTestWork.Classes
         /// Остановлен ли поиск.
         /// </summary>
         private bool searchIsStop;
+
+        /// <summary>
+        /// Шаблон методов события завершения поиска.
+        /// </summary>
+        /// <param name="searchIsStop">Остановлен ли поиск.</param>
+        public delegate void SearchCompliteHandle(bool searchIsStop);
+
+        /// <summary>
+        /// Завершение поиска.
+        /// </summary>
+        public event SearchCompliteHandle SearchComplite;
 
         /// <summary>
         /// Открытый путь.
@@ -178,6 +187,8 @@ namespace WebtronicsTestWork.Classes
                 fullName = Regex.Replace(fullName, @"\\+$", "");
             }
 
+            fullName = Regex.Replace(fullName, @"\\{2,}", "\\");
+
             if (Directory.Exists(fullName))
             {
                 Path = fullName;
@@ -210,7 +221,7 @@ namespace WebtronicsTestWork.Classes
                         DateVisited = DateTime.Now
                     };
 
-                    Core.AddOpenedFile(openedFile);
+                    Core.AddOpenedFileAsync(openedFile);
                     return;
                 }
                 catch (Exception ex)
@@ -267,16 +278,21 @@ namespace WebtronicsTestWork.Classes
 
             if (String.IsNullOrEmpty(Path))
             {
+                List<Task> tasks = new List<Task>();
+
                 foreach (ObjectView item in GetDrives())
                 {
                     directoryInfo = new DirectoryInfo(item.FullName);
-                    Task.Run(() => GetSearchObjects(directoryInfo, progress, template));
+                    tasks.Add(new Task(() => GetSearchObjects(directoryInfo, progress, template)));
                 }
+
+                StartSearch(tasks);
             }
             else
             {
                 directoryInfo = new DirectoryInfo(Path);
-                Task.Run(() => GetSearchObjects(directoryInfo, progress, template));
+                Task task = new Task(() => GetSearchObjects(directoryInfo, progress, template));
+                StartSearch(task);
             }
 
             return objectViews;
@@ -288,6 +304,42 @@ namespace WebtronicsTestWork.Classes
         public void StopSearch()
         {
             searchIsStop = true;
+        }
+
+        /// <summary>
+        /// Начать задачу поиска.
+        /// </summary>
+        /// <param name="searhTask">Задача поиска.</param>
+        private void StartSearch(Task searhTask)
+        {
+            Task loadTask = new Task(() =>
+            {
+                searhTask.Start();
+                searhTask.Wait();
+                SearchComplite?.Invoke(searchIsStop);
+            });
+
+            loadTask.Start();
+        }
+
+        /// <summary>
+        /// Начать задачу поиска.
+        /// </summary>
+        /// <param name="searhTasks">Задачи поиска.</param>
+        private void StartSearch(List<Task> searhTasks)
+        {
+            Task loadTask = new Task(() =>
+            {
+                foreach (Task item in searhTasks)
+                {
+                    item.Start();
+                }
+
+                Task.WaitAll(searhTasks.ToArray());
+                SearchComplite?.Invoke(searchIsStop);
+            });
+
+            loadTask.Start();
         }
 
         /// <summary>
