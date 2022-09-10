@@ -1,0 +1,59 @@
+﻿using MySqlConnector;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using WebtronicsTestWork.Model.Entities;
+
+namespace WebtronicsTestWork.Model.Classes
+{
+    public static class Core
+    {
+        private static readonly MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder()
+        {
+            Server = Properties.Settings.Default.Server,
+            Database = Properties.Settings.Default.Database,
+            UserID = Properties.Settings.Default.UserId,
+            Password = Properties.Settings.Default.Password
+        };
+
+        public static void AddOpenedFileAsync(OpenedFile openedFile)
+        {
+            Task.Run(() => AddOpenedFile(openedFile));
+        }
+
+        public static void AddOpenedFile(OpenedFile openedFile)
+        {
+            MySqlConnection connection = new MySqlConnection()
+            {
+                ConnectionString = builder.ConnectionString
+            };
+
+            MySqlCommand command = new MySqlCommand()
+            {
+                Connection = connection,
+                CommandText = "INSERT INTO `OpenedFile`(Title, DateVisited)\r\nVALUES(@Title, @Date);"
+            };
+
+            MySqlParameter[] parameters = new MySqlParameter[2]
+            {
+                new MySqlParameter("@Title", MySqlDbType.VarChar) { Value = openedFile.Title },
+                new MySqlParameter("@Date", MySqlDbType.DateTime) { Value = openedFile.DateVisited }
+            };
+
+            command.Parameters.AddRange(parameters);
+
+            try
+            {
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception) { }
+            finally
+            {
+                connection.Close();
+            }
+        }
+    }
+}

@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using WebtronicsTestWork.Model.Classes;
+using WebtronicsTestWork.Model.Entities;
 
 namespace WebtronicsTestWork.Classes
 {
@@ -198,8 +200,24 @@ namespace WebtronicsTestWork.Classes
         {
             if (File.Exists(fullName))
             {
-                Process.Start(fullName);
-                return;
+                try
+                {
+                    Process.Start(fullName);
+
+                    OpenedFile openedFile = new OpenedFile()
+                    {
+                        Title = System.IO.Path.GetFileName(fullName),
+                        DateVisited = DateTime.Now
+                    };
+
+                    Core.AddOpenedFile(openedFile);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Неудалось открыть файл.", ex);
+                }
+
             }
 
             throw new Exception($"Открываемого файла({fullName}) не существует.");
