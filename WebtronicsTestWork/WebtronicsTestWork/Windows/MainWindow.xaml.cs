@@ -276,11 +276,20 @@ namespace WebtronicsTestWork.Windows
         /// Обработка завершения поиска.
         /// </summary>
         /// <param name="searchIsStop">Остановлен ли поиск.</param>
-        private void PathManagerOnSearchComplite(bool searchIsStop)
+        /// <param name="overflowSearh">Достигнут ли предел количества элементов.</param>
+        private void PathManagerOnSearchComplite(bool searchIsStop, bool overflowSearh)
         {
-            if (!searchIsStop)
+            string stopText;
+
+            if (searchIsStop && overflowSearh)
             {
-                PathTextBox.Dispatcher.Invoke(() => PathTextBox.Text = "Поиск завершён.");
+                stopText = "Поиск завершён из-за большова количества найденных совпадений.";
+                PathTextBox.Dispatcher.Invoke(() => PathTextBox.Text = stopText);
+            }
+            else if (!searchIsStop)
+            {
+                stopText = "Поиск завершён.";
+                PathTextBox.Dispatcher.Invoke(() => PathTextBox.Text = stopText);
             }
         }
     }

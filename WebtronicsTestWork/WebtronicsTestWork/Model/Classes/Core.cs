@@ -16,6 +16,7 @@ namespace WebtronicsTestWork.Model.Classes
         private static readonly MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder()
         {
             Server = Properties.Settings.Default.Server,
+            Port = Properties.Settings.Default.Port,
             Database = Properties.Settings.Default.Database,
             UserID = Properties.Settings.Default.UserId,
             Password = Properties.Settings.Default.Password

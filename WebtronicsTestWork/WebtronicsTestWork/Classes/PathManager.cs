@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using WebtronicsTestWork.Model.Classes;
 using WebtronicsTestWork.Model.Entities;
 
@@ -27,6 +28,8 @@ namespace WebtronicsTestWork.Classes
         private static readonly Dictionary<string, string> replaceDictionary = new Dictionary<string, string>()
         {
             { "\\", "\\\\" },
+            { "^", "\\^" },
+            { "$", "\\$" },
             { ".", "\\." },
             { "?", "." },
             { "*", "\\w*" }
@@ -38,10 +41,16 @@ namespace WebtronicsTestWork.Classes
         private bool searchIsStop;
 
         /// <summary>
+        /// Достигнут ли предел количества элементов.
+        /// </summary>
+        private bool overflowSearh;
+
+        /// <summary>
         /// Шаблон методов события завершения поиска.
         /// </summary>
         /// <param name="searchIsStop">Остановлен ли поиск.</param>
-        public delegate void SearchCompliteHandle(bool searchIsStop);
+        /// <param name="overflowSearh">Достигнут ли предел количества элементов.</param>
+        public delegate void SearchCompliteHandle(bool searchIsStop, bool overflowSearh);
 
         /// <summary>
         /// Завершение поиска.
@@ -191,7 +200,14 @@ namespace WebtronicsTestWork.Classes
 
             if (Directory.Exists(fullName))
             {
-                Path = fullName;
+                DirectoryInfo directoryInfo = new DirectoryInfo(fullName);
+
+                if (directoryInfo.Parent != null)
+                {
+                    directoryInfo = directoryInfo.Parent.GetDirectories(directoryInfo.Name).First();
+                }
+
+                Path = directoryInfo.FullName;
             }
             else if (String.IsNullOrWhiteSpace(fullName))
             {
@@ -265,6 +281,7 @@ namespace WebtronicsTestWork.Classes
             }
 
             searchIsStop = false;
+            overflowSearh = false;
             DirectoryInfo directoryInfo;
             IProgress<ObjectView> progress = new Progress<ObjectView>((view) =>
             {
@@ -273,6 +290,7 @@ namespace WebtronicsTestWork.Classes
                 if (objectViews.Count >= 1000)
                 {
                     searchIsStop = true;
+                    overflowSearh = true;
                 }
             });
 
@@ -316,7 +334,7 @@ namespace WebtronicsTestWork.Classes
             {
                 searhTask.Start();
                 searhTask.Wait();
-                SearchComplite?.Invoke(searchIsStop);
+                SearchComplite?.Invoke(searchIsStop, overflowSearh);
             });
 
             loadTask.Start();
@@ -336,7 +354,7 @@ namespace WebtronicsTestWork.Classes
                 }
 
                 Task.WaitAll(searhTasks.ToArray());
-                SearchComplite?.Invoke(searchIsStop);
+                SearchComplite?.Invoke(searchIsStop, overflowSearh);
             });
 
             loadTask.Start();
@@ -364,6 +382,8 @@ namespace WebtronicsTestWork.Classes
                 {
                     regexPattern = regexPattern.Replace(item.Key, item.Value);
                 }
+
+                regexPattern = $"^{regexPattern}$";
             }
 
             try

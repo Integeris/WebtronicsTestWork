@@ -5,6 +5,8 @@ VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebtronicsTestWork", "WebtronicsTestWork\WebtronicsTestWork.csproj", "{4DFAA2AA-04F1-48F4-A8B5-6A81DA529F0C}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "WebtronicsTestWorkSetup", "WebtronicsTestWorkSetup\WebtronicsTestWorkSetup.vdproj", "{6B91DA70-1207-4DF1-BF33-F3AEC0FF3253}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,8 @@ Global
 		{4DFAA2AA-04F1-48F4-A8B5-6A81DA529F0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DFAA2AA-04F1-48F4-A8B5-6A81DA529F0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DFAA2AA-04F1-48F4-A8B5-6A81DA529F0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B91DA70-1207-4DF1-BF33-F3AEC0FF3253}.Debug|Any CPU.ActiveCfg = Debug
+		{6B91DA70-1207-4DF1-BF33-F3AEC0FF3253}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

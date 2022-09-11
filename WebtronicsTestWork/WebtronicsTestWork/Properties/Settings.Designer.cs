@@ -38,9 +38,9 @@ namespace WebtronicsTestWork.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("3306")]
-        public string Port {
+        public uint Port {
             get {
-                return ((string)(this["Port"]));
+                return ((uint)(this["Port"]));
             }
             set {
                 this["Port"] = value;
